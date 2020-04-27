@@ -23,31 +23,14 @@
 							   :xi-xicp ,xi-xicp
 							   :sqr[xi-xicp] ,sqr-xi-xicp)))
 				     body))))
-    `(defvar ,name ,experiments)))
+    `(defparameter ,name ,experiments)))
 
 ;; пример использоваия макрокомманды "defgroup"
 ;; (macroexpand-1 '(defgroup group-1 (1 1 1 1)
 ;;                                   (2 2 2 2) )) =>
 ;; (DEFVAR GROUP-1
-;;   (LIST (MAKE-EXPERIMENT :NUMBER 1 :XI 1 :XI-XICP 1 :SQR-XI-XICP 1)
-;;         (MAKE-EXPERIMENT :NUMBER 2 :XI 2 :XI-XICP 2 :SQR-XI-XICP 2)))
-
-(defgroup group-1
-  (1 13 -2 4)
-  (2 14 -1 1)
-  (3 15  0 0)
-  (4 17  2 4)
-  (5 16  1 1)
-  (6 15  0 0))
-
-(defgroup group-2
-  (1 18 -3 9)
-  (2 19 -2 4)
-  (3 22  1 4)
-  (4 20 -1 1)
-  (5 24  3 9)
-  (6 23  2 4))
-
+;;   (LIST (MAKE-EXPERIMENT :NUMBER 1 :XI 1 :XI-XICP 1 :SQR[XI-XICP] 1)
+;;         (MAKE-EXPERIMENT :NUMBER 2 :XI 2 :XI-XICP 2 :SQR[XI-XICP] 2)))
 (defun group-sum (group &key xi sqr[xi-xicp])
   (cond
     (xi
@@ -61,3 +44,34 @@
    (group-sum group :sqr[xi-xicp] t)
    (length group) ;; количество испытаний в группе
    ))
+
+(defun print-group (group)
+  (format t "~&---------------------------------------------------------")
+  (format t "~&~5,10Tномер~6,10TXi~5,10TXi_cp~5,10T(Xi-Xi_cp)^2")
+  (format t "~&~5,10Tиспытания")
+  (format t "~&---------------------------------------------------------")
+  (loop for ex in group do
+       (format t "~&~5,10T~a~6,10T~a~5,10T~a~5,10T~a"
+	       (experiment-number       ex) 
+	       (experiment-number       ex) 
+	       (experiment-xi-xicp      ex) 
+	       (experiment-sqr[xi-xicp] ex)))
+    (format t "~&---------------------------------------------------------"))
+
+;; зададим 2 группы испытаниий:
+(defgroup group-1
+  (1 13 -2 4)
+  (2 14 -1 1)
+  (3 15  0 0)
+  (4 17  2 4)
+  (5 16  1 1)
+  (6 15  0 0))
+
+(defgroup group-2
+  (1 18 -3 9)
+  (2 19 -2 4)
+  (3 22  1 1)
+  (4 20 -1 1)
+  (5 24  3 9)
+  (6 23  2 4))
+
