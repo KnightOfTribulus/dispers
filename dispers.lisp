@@ -72,7 +72,7 @@
 	 do  (progn
 	       (format output
 		       "~&~5,10T~a~5,10T~a~5,10T~a~5,10T~a"
-		       i (elt xi i) (elt xi-ximean i) (elt sq i))))
+		       (+ 1 i)  (elt xi i) (elt xi-ximean i) (elt sq i))))
       (format output "~&-----------------------------------------------"))))
 
 ;; средняя групповая дисперсия 
@@ -104,4 +104,5 @@
 ;;;; ЗАДАНИЕ 2:
 
 ;; each point is a list of 2 numbers
-
+(defparameter row-1 ')
+(defparameter row-2)
