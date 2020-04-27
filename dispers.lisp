@@ -3,75 +3,69 @@
 (in-package #:dispers)
 
 ;;;; ЗАДАНИЕ 1:
+(defun avg (list)
+    (/ (apply #'+ list)
+       (length list)))
 
-;; Определим структуру, соответствующуу испытанию:
-(defstruct experiment
-  (number      nil)
-  (xi          nil)
-  (xi-xicp     nil)
-  (sqr[xi-xicp] nil) ;; в силу синтаксических особенностей Common Lisp, данное поле этой структуры отвечает (Xi-Xicp)^2
-  )
+(defun sum (list)
+  (apply #'+ list))
 
-;; для упрощения ввода таблиц определим следующую синтаксическую конструкцию:
-(defmacro defgroup (name &body body)
-  
-  (let ((experiments (append '(list)
-			     (mapcar (lambda (l) 
-				       (destructuring-bind (number xi xi-xicp sqr-xi-xicp) l
-					 `(make-experiment :number ,number
-							   :xi ,xi
-							   :xi-xicp ,xi-xicp
-							   :sqr[xi-xicp] ,sqr-xi-xicp)))
-				     body))))
-    `(defparameter ,name ,experiments)))
+(defclass group ()
+  ((%xi :initarg :xi
+	:accessor xi
+	:initform (error "xi wasn't provided"))
+   (%xi-mean :accessor xi-mean
+	     :initform nil)
+   (%xi-ximean :initform nil
+	       :accessor xi-ximean)
+   (%[xi-ximean]^2 :accessor [xi-ximean]^2
+		   :initform nil)))
 
-;; пример использоваия макрокомманды "defgroup"
-;; (macroexpand-1 '(defgroup group-1 (1 1 1 1)
-;;                                   (2 2 2 2) )) =>
-;; (DEFVAR GROUP-1
-;;   (LIST (MAKE-EXPERIMENT :NUMBER 1 :XI 1 :XI-XICP 1 :SQR[XI-XICP] 1)
-;;         (MAKE-EXPERIMENT :NUMBER 2 :XI 2 :XI-XICP 2 :SQR[XI-XICP] 2)))
-(defun group-sum (group &key xi sqr[xi-xicp])
-  (cond
-    (xi
-     (apply #'+ (mapcar (lambda (ex) (experiment-xi ex)) group)))
-    (sqr[xi-xicp]
-     (apply #'+ (mapcar (lambda (ex) (experiment-sqr[xi-xicp] ex)) group)))))
 
-;; определим функцию для рассета внуртигрупповой дисперсии
-(defun group-disperion (group)
-  (/
-   (group-sum group :sqr[xi-xicp] t)
-   (length group) ;; количество испытаний в группе
-   ))
+(defmethod initialize-instance :after ((this group) &key)
+  (with-accessors ((xi-mean xi-mean)
+		  (xi xi)
+		  (xi-ximean xi-ximean)
+		  (sq [xi-ximean]^2))
+      this
+    (setf xi-mean (avg xi))
+    (setf xi-ximean (mapcar #'(lambda (xi-element) (- xi-element xi-mean))
+			    xi))
+    (setf sq (mapcar #'(lambda (xi-element) (expt (- xi-element xi-mean) 2))
+			    xi))))
 
-(defun print-group (group)
-  (format t "~&---------------------------------------------------------")
-  (format t "~&~5,10Tномер~6,10TXi~5,10TXi_cp~5,10T(Xi-Xi_cp)^2")
-  (format t "~&~5,10Tиспытания")
-  (format t "~&---------------------------------------------------------")
-  (loop for ex in group do
-       (format t "~&~5,10T~a~6,10T~a~5,10T~a~5,10T~a"
-	       (experiment-number       ex) 
-	       (experiment-number       ex) 
-	       (experiment-xi-xicp      ex) 
-	       (experiment-sqr[xi-xicp] ex)))
-    (format t "~&---------------------------------------------------------"))
+(defmethod units ((this group))
+  (length (xi this)))
 
-;; зададим 2 группы испытаниий:
-(defgroup group-1
-  (1 13 -2 4)
-  (2 14 -1 1)
-  (3 15  0 0)
-  (4 17  2 4)
-  (5 16  1 1)
-  (6 15  0 0))
+(defmethod group-dispersion ((this group))
+  (with-accessors ((sq [xi-ximean]^2))
+      this
+    (/ (apply #'+ sq)
+       (length sq))))
 
-(defgroup group-2
-  (1 18 -3 9)
-  (2 19 -2 4)
-  (3 22  1 1)
-  (4 20 -1 1)
-  (5 24  3 9)
-  (6 23  2 4))
+(defun inter-dispersion (&rest groups)
+  (let ((x-mean
+	 (/ (sum (mapcar (lambda (group) (* (xi-mean group) (units group)))
+			       groups))
+	    (sum (mapcar (lambda (group) (units group))
+			 groups)))))
+  (/ (sum (mapcar (lambda (group)
+		    (* (units group)
+		       (expt (- (xi-mean group) x-mean) 2)))
+		  groups))
+     (sum (mapcar (lambda (group)
+		    (units group))
+		  groups)))))
+
+(defun mean-group-dispertion (&rest groups)
+  (/ (apply #'+ (mapcar #'(lambda (gr) (group-dispersion gr))
+			groups))
+     (length groups)))
+
+(defun overall-dispersion (&rest groups)
+  (+ (apply #'mean-group-dispertion groups)
+     (apply #'inter-dispersion groups)))
+
+(defparameter group-1 (make-instance 'group :xi '(13 14 15 17 16 15)))
+(defparameter group-2 (make-instance 'group :xi '(18 19 22 20 24 23)))
 
