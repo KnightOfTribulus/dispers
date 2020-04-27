@@ -66,6 +66,9 @@
   (+ (apply #'mean-group-dispertion groups)
      (apply #'inter-dispersion groups)))
 
+(defun correlation-factor (&rest groups)
+  (sqrt (/ (apply #'inter-dispersion groups)
+	(apply #'overall-dispersion groups))))
+
 (defparameter group-1 (make-instance 'group :xi '(13 14 15 17 16 15)))
 (defparameter group-2 (make-instance 'group :xi '(18 19 22 20 24 23)))
-
