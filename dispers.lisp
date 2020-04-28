@@ -179,3 +179,35 @@
 	   (list x y))
 	 *distance*
 	 *time*))
+
+
+
+(defun plot-regression (&key (x *distance*) (y *time*) (output-file "regression.png"))
+  (multiple-value-bind (b a)
+      (statistics:linear-regression
+       (mapcar (lambda (x y)
+		 (list x y))
+	       *distance*
+	       *time*))
+    (with-plots (*standard-output* :debug t)
+      (gp-setup :terminal '(pngcairo)
+		:output output-file)
+      (gp :unset :key)
+      ;;      (gp :set :xrange (list  min-x max-x))
+      ;;      (gp :set :xrange (list min-y max-y))y
+      (gp :set :size '("ratio 1"))
+      (gp :set :title (format nil "r= ~D, y=~ax+~a" (correl x y) a b))
+      (plot #'(lambda ()
+		(mapcar (lambda (xi yi)
+			  (format t "~&~a ~a" xi yi))
+			x y))
+	    :with '(:points :linestyle 7))
+      ;;      (func-plot (format nil "[~a:~a] ~a * x + ~a" min-x max-x a b))
+      (func-plot (format nil "~a * x + ~a" a b))
+      )))
+
+
+;; (plot #'(lambda ()
+;; 		(format t "~a ~a" min-x (+ (* a min-x) b))
+;; 		(format t "~&~a ~a" max-x (+ (* a max-x) b)))
+;; 	    :with '(:lines))
