@@ -77,7 +77,7 @@
 
 ;; средняя групповая дисперсия 
 (defun mean-group-dispertion (&rest groups)
-  (/ (apply #'+ (mapcar #'(lambda (gr) (group-dispersion gr))
+  (/ (sum (mapcar #'(lambda (gr) (group-dispersion gr))
 			groups))
      (length groups)))
 
@@ -91,8 +91,8 @@
   (sqrt (/ (apply #'inter-dispersion groups)
 	   (apply #'overall-dispersion groups))))
 
-(defparameter group-1 (make-instance 'group :xi '(13 14 15 17 16 15)))
-(defparameter group-2 (make-instance 'group :xi '(18 19 22 20 24 23)))
+(defparameter *group-1* (make-instance 'group :xi '(13 14 15 17 16 15)))
+(defparameter *group-2* (make-instance 'group :xi '(18 19 22 20 24 23)))
 
 ;; провести тестовые рассчеты для отчета здесь:
 
@@ -104,5 +104,54 @@
 ;;;; ЗАДАНИЕ 2:
 
 ;; each point is a list of 2 numbers
-(defparameter row-1 ')
-(defparameter row-2)
+;; (defparameter *x* '(105 102 100 106 112 115 118 116 120 125 125 128)
+;;   "число жалоб(Х)")
+;; (defparameter *y* '(68 71 69 66 65 70 75 76 78 77 79 82)
+;;   "затраты на ремонт (Y)")
+
+(defparameter *x*
+  (mapcar (lambda (number) (coerce number 'double-float))
+   '(105 102 100 106 112 115 118 116 120 125 125 128))
+  
+  "число жалоб(Х)")
+(defparameter *y*
+    (mapcar (lambda (number) (coerce number 'double-float))
+	    '(68 71 69 66 65 70 75 76 78 77 79 82))
+  "затраты на ремонт (Y)")
+
+
+
+;; коэффициент корреляции без временного лага
+;; statistics:
+(defun correl (*x* *y* &key (lag 0))
+  (statistics:correlation-coefficient
+   (mapcar (lambda (x y) (list x y))
+	   *x*
+	   (nthcdr lag *y*))))
+
+(defparameter *r0*
+  (correl *x* *y*)
+  "коэффициент корреляции без временного лага") 
+
+(defparameter *r1*
+  (correl *x* *y* :lag 1)
+  "коэффициент корреляции с временным лагом 1")
+
+(defparameter *r2*
+  (correl *x* *y* :lag 2)
+  "коэффициент корреляции с временным лагом 2") 
+
+(defparameter *r3*
+  (correl *x* *y* :lag 3)
+  "коэффициент корреляции с временным лагом 3")
+
+(defun plot-correl (&key (x *x*)  (y *y*) (output-file #p"correl.png")  (lag 0))
+  (let* ((new-y (nthcdr lag y)))
+    (with-plots (*standard-output* :debug t)
+      (gp-setup :terminal '(pngcairo)
+		:output output-file)
+      (plot #'(lambda ()
+		(mapcar (lambda (x y)
+			  (format t "~&~a ~a" x y))
+			x new-y))
+	    :with '(:curves)))))

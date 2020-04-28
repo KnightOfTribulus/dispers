@@ -1,4 +1,4 @@
 ;;;; package.lisp
 
 (defpackage #:dispers
-  (:use #:cl))
+  (:use #:cl #:eazy-gnuplot))
