@@ -122,6 +122,7 @@
 
 
 ;; коэффициент корреляции без временного лага
+;; !!!probably needs switching to "cl-mathstats"
 ;; statistics:
 (defun correl (*x* *y* &key (lag 0))
   (statistics:correlation-coefficient
@@ -145,13 +146,19 @@
   (correl *x* *y* :lag 3)
   "коэффициент корреляции с временным лагом 3")
 
-(defun plot-correl (&key (x *x*)  (y *y*) (output-file #p"correl.png")  (lag 0))
+(defparameter *plot-name* "gnuplot-output")
+
+(defun plot-correl (&key (x *x*)  (y *y*) (output-file "correl.png")  (lag 0))
   (let* ((new-y (nthcdr lag y)))
     (with-plots (*standard-output* :debug t)
       (gp-setup :terminal '(pngcairo)
 		:output output-file)
+      (gp :unset :key)
+      (gp :set :size '("ratio 1"))
+      (gp :set :title (format nil "r= ~D, lag ~a" (correl x new-y) lag) )
       (plot #'(lambda ()
 		(mapcar (lambda (x y)
 			  (format t "~&~a ~a" x y))
 			x new-y))
-	    :with '(:curves)))))
+	    :with '(:points :linestyle 7)
+	    ))))
