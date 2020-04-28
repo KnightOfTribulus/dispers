@@ -6,6 +6,6 @@
   :license  "Specify license here"
   :version "0.0.1"
   :serial t
-  :depends-on ("eazy-gnuplot" "lhstats")
+  :depends-on ("eazy-gnuplot" "lhstats" "cl-mathstats")
   :components ((:file "package")
                (:file "dispers")))

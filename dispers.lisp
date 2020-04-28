@@ -94,7 +94,7 @@
 (defparameter *group-1* (make-instance 'group :xi '(13 14 15 17 16 15)))
 (defparameter *group-2* (make-instance 'group :xi '(18 19 22 20 24 23)))
 
-;; провести тестовые рассчеты для отчета здесь:
+;; TODO провести тестовые рассчеты для отчета здесь:
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -104,26 +104,27 @@
 ;;;; ЗАДАНИЕ 2:
 
 ;; each point is a list of 2 numbers
-;; (defparameter *x* '(105 102 100 106 112 115 118 116 120 125 125 128)
-;;   "число жалоб(Х)")
-;; (defparameter *y* '(68 71 69 66 65 70 75 76 78 77 79 82)
-;;   "затраты на ремонт (Y)")
-
-(defparameter *x*
-  (mapcar (lambda (number) (coerce number 'double-float))
-   '(105 102 100 106 112 115 118 116 120 125 125 128))
-  
+(defparameter *x* '(105 102 100 106 112 115 118 116 120 125 125 128)
   "число жалоб(Х)")
-(defparameter *y*
-    (mapcar (lambda (number) (coerce number 'double-float))
-	    '(68 71 69 66 65 70 75 76 78 77 79 82))
+(defparameter *y* '(68 71 69 66 65 70 75 76 78 77 79 82)
   "затраты на ремонт (Y)")
+
+;; (defparameter *x*
+;;   (mapcar (lambda (number) (coerce number 'double-float))
+;;    '(105 102 100 106 112 115 118 116 120 125 125 128))
+  
+;;   "число жалоб(Х)")
+;; (defparameter *y*
+;;     (mapcar (lambda (number) (coerce number 'double-float))
+;; 	    '(68 71 69 66 65 70 75 76 78 77 79 82))
+;;   "затраты на ремонт (Y)")
 
 
 
 ;; коэффициент корреляции без временного лага
-;; !!!probably needs switching to "cl-mathstats"
+;; !!!probably need switching to "cl-mathstats"
 ;; statistics:
+
 (defun correl (*x* *y* &key (lag 0))
   (statistics:correlation-coefficient
    (mapcar (lambda (x y) (list x y))
@@ -155,10 +156,26 @@
 		:output output-file)
       (gp :unset :key)
       (gp :set :size '("ratio 1"))
-      (gp :set :title (format nil "r= ~D, lag ~a" (correl x new-y) lag) )
+      (gp :set :title (format nil "r= ~D, lag ~a" (correl x new-y) lag))
       (plot #'(lambda ()
 		(mapcar (lambda (x y)
 			  (format t "~&~a ~a" x y))
 			x new-y))
-	    :with '(:points :linestyle 7)
-	    ))))
+	    :with '(:points :linestyle 7)))))
+
+;; TODO провести тестовые рассчеты для отчета здесь:
+
+;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+;;;; ЗАДАНИЕ 3
+(defvar *distance* '(3.5 2.4 4.9 4.2 3 1.3 1 3 1.5 4.1)
+  "расстояние, км")
+
+(defvar *time* '(16 13 19 18 12 11 8 14 9 16)
+  "время, мин")
+
+(statistics:linear-regression
+ (mapcar (lambda (x y)
+	   (list x y))
+	 *distance*
+	 *time*))
