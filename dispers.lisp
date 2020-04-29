@@ -2,7 +2,10 @@
 
 (in-package #:dispers)
 
-;;;; ЗАДАНИЕ 1:
+;;;; вспомогательные функции:
+(defun transpose (m)
+  (apply #'mapcar #'list m))
+
 (defun avg (list)
     (/ (apply #'+ list)
        (length list)))
@@ -10,6 +13,14 @@
 (defun sum (list)
   (apply #'+ list))
 
+(defun matrix-multiply (a b)
+  (flet ((col (mat i) (mapcar #'(lambda (row) (elt row i)) mat))
+         (row (mat i) (elt mat i)))
+    (loop for row from 0 below (length a)
+          collect (loop for col from 0 below (length (row b 0))
+                        collect (apply #'+ (mapcar #'* (row a row) (col b col)))))))
+
+;;;; ЗАДАНИЕ 1:
 (defclass group ()
   ((%xi :initarg :xi
 	:accessor xi
@@ -168,19 +179,11 @@
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ;;;; ЗАДАНИЕ 3
-(defvar *distance* '(3.5 2.4 4.9 4.2 3 1.3 1 3 1.5 4.1)
+(defparameter *distance* '(3.5 2.4 4.9 4.2 3 1.3 1 3 1.5 4.1)
   "расстояние, км")
 
-(defvar *time* '(16 13 19 18 12 11 8 14 9 16)
+(defparameter *time* '(16 13 19 18 12 11 8 14 9 16)
   "время, мин")
-
-(statistics:linear-regression
- (mapcar (lambda (x y)
-	   (list x y))
-	 *distance*
-	 *time*))
-
-
 
 (defun plot-regression (&key (x *distance*) (y *time*) (output-file "regression.png"))
   (multiple-value-bind (b a)
@@ -193,8 +196,8 @@
       (gp-setup :terminal '(pngcairo)
 		:output output-file)
       (gp :unset :key)
-      ;;      (gp :set :xrange (list  min-x max-x))
-      ;;      (gp :set :xrange (list min-y max-y))y
+      (gp :set :xlabel "x")
+      (gp :set :ylabel "y")
       (gp :set :size '("ratio 1"))
       (gp :set :title (format nil "r= ~D, y=~ax+~a" (correl x y) a b))
       (plot #'(lambda ()
@@ -202,12 +205,56 @@
 			  (format t "~&~a ~a" xi yi))
 			x y))
 	    :with '(:points :linestyle 7))
-      ;;      (func-plot (format nil "[~a:~a] ~a * x + ~a" min-x max-x a b))
-      (func-plot (format nil "~a * x + ~a" a b))
-      )))
+      (func-plot (format nil "~a * x + ~a" a b)))))
 
 
-;; (plot #'(lambda ()
-;; 		(format t "~a ~a" min-x (+ (* a min-x) b))
-;; 		(format t "~&~a ~a" max-x (+ (* a max-x) b)))
-;; 	    :with '(:lines))
+;;;;ЗАДАНИЕ 4:
+(defparameter *x-matrix*
+  #2A((1 4    15   17  )
+      (1 3.8  15.2 16.8)
+      (1 8.2  15.5 16  )
+      (1 14.7 18.1 20.2)
+      (1 19.8 15.8 18.2)
+      (1 8.6  18.3 17  )
+      (1 12.6 15.4 16.4)
+      (1 5.8  16   17.7))
+  "матрица X")
+
+
+(defparameter *x-1*  '(4 3.8 8.2 14.7 19.8 8.6 12.6 5.8)
+  "Затраты на рекламу, млн. руб.")
+(defparameter *x-2*  '(15 15.2 15.5 18.1 15.8 18.3 15.4 16)
+  "Цена, руб")
+(defparameter *x-3*  '(17 16.8 16 20.2 18.2 17 16.4 17.7)
+  "Конкурентная цена, руб.")
+(defparameter *x-4*  '(100 101 104 107 108 110 110.3 112.3)
+  "Индекс покупательной способности")
+
+(defparameter *y-column*
+  '(126 148 274 432 367 321 331 364)
+  "Реализация, млн. руб.")
+
+(cl-mathstats:multiple-linear-regression-verbose *y-column* *x-1* *x-2* *x-3*)
+
+(defun multiple-regression (y &rest xs)
+  (multiple-value-bind (a-coefs)
+      (apply #'cl-mathstats:multiple-linear-regression-brief y xs)
+    (let* ((xa (matrix-multiply
+		(transpose (append (list (make-list (length (elt xs 0)) :initial-element 1)) xs)) 
+		(mapcar (lambda (ai) (list ai))
+			a-coefs)))
+	   (e-coefs (mapcar (lambda (yi xai) (- yi (car xai)))
+	   		    y
+	   		    xa))
+	   (y-coefs (mapcar (lambda (ei yi) (- yi ei))
+			    e-coefs y)))
+      (format t "~&a coefficients: ~&~a~&e-coefficients: ~&~a~&y-coefficients:~&~a" a-coefs e-coefs y-coefs))))
+
+(defun test-multi-regression ()
+  (multiple-regression *y-column* *x-1* *x-2* *x-3* *x-4*))
+
+(let ((y1 '(126 148 274 364))
+      (x1 '(4 3.8 8.2 5.8))
+      (x2 '(15 15.2 15.5 16))
+      (x3 '(17 16.8 16 17.7)))
+  (multiple-regression y1 x1 x2 x3))
